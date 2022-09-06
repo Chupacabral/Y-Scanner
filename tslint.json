@@ -1,0 +1,8 @@
+{
+  "extends": ["tslint:recommended", "tslint-config-prettier"],
+  "rules": {
+    "max-classes-per-file": 5,
+    "brace-style": ["error", "stroustrup", {"allowSingleLine": true }]
+
+  }
+}
