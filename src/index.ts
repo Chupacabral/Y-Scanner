@@ -106,8 +106,6 @@ export class YScanner {
     else if ((<mut>this).pos > this.text.length) {
       (<mut>this).pos = this.text.length;
     }
-
-    return this;
   }
 
   public setPosition(n: number) {
@@ -122,19 +120,13 @@ export class YScanner {
     else if ((<mut>this).pos > this.text.length) {
       (<mut>this).pos = this.text.length;
     }
-
-    return this;
   }
 
-  public reset(everything = true) {
+  public reset() {
     (<mut>this).pos = 0;
     (<mut>this).lastPos = 0;
     (<mut>this).lastMatch = null;
-
-    if (everything) {
-      (<mut>this).insensitive = false;
-    }
-
+    (<mut>this).insensitive = false;
     (<mut>this).lastState = {
       pos: 0,
       lastPos: 0,
@@ -145,8 +137,6 @@ export class YScanner {
   public updateMatch(match: string) {
     this.movePosition(match.length);
     (<mut>this).lastMatch = match;
-
-    return this;
   }
 
   public undoLastMovement() {
@@ -156,8 +146,6 @@ export class YScanner {
     (<mut>this).lastPos = this.lastState.lastPos;
     (<mut>this).lastMatch = this.lastState.lastMatch;
     (<mut>this).lastState = previousLastState;
-
-    return this;
   }
 
   public duplicate(): YScanner {
@@ -279,13 +267,13 @@ export class YScanner {
    * @param options An options object of type {@link DelimitedTextInfo}.
    *
    *                Any {@link InternalDelimitedTextInfo} instances stored in
-   *                the `internal` option will have the optional
+   *                the `inner` option will have the optional
    *                `escape` and `keepDelimiters` properties default to whatever
    *                is given within the `options` parameter for this method.
    *
    * @default ```js
    * {
-   *   start: '"', end: '"', escape: '\\', keepDelimiters: false, internal: []
+   *   start: '"', end: '"', escape: '\\', keepDelimiters: false, inner: []
    * }
    * ```
    * The default values for `options` will scan a basic double-quote delimited

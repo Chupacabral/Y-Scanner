@@ -1,6 +1,6 @@
 {
   "name": "y-scanner",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "description": "Simple, but powerful lexical scanner that is a more minimal implementation of X-Scanner",
   "main": "out/index.js",
   "types": "out/index.d.ts",
