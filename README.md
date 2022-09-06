@@ -7,7 +7,7 @@
 
 ![Testing](https://img.shields.io/badge/TESTS-0%20%2F%200-18ab64?style=for-the-badge&logo=testcafe&logoColor=white)
 &nbsp;
-![Code Coverage](https://img.shields.io/badge/COVERAGE-0%-blueviolet?style=for-the-badge&logo=codeforces&logoColor=white)
+![Code Coverage](https://img.shields.io/badge/COVERAGE-0%25-blueviolet?style=for-the-badge&logo=codeforces&logoColor=white)
 &nbsp;
 ![Features Implemented](https://img.shields.io/badge/FEATURES-3%20/%204-c27904?style=for-the-badge&logo=windowsterminal&logoColor=white)
 
@@ -118,6 +118,8 @@ The portion of the text that has already been scanned.
 
 ### `pointer` - `{ pos, lastPos, lastMatch }`
 [](#pointer)
+
+A pointer to the current state of the scanner.
 
 ### `lastState` - `{ pos, lastPos, lastMatch }`
 A pointer to the previous state of the scanner.
