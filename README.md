@@ -9,7 +9,6 @@
 &nbsp;
 ![Code Coverage](https://img.shields.io/badge/COVERAGE-0%25-blueviolet?style=for-the-badge&logo=codeforces&logoColor=white)
 &nbsp;
-![Features Implemented](https://img.shields.io/badge/FEATURES-3%20/%204-c27904?style=for-the-badge&logo=windowsterminal&logoColor=white)
 
 Simple, but powerful lexical scanner. Inspired by, but distinct from, Ruby's
 StringScanner.
@@ -54,8 +53,7 @@ However, some interesting features that Y-Scanner provides are:
         which is text between `[]` with a string between two `"` and the `[]`
         inside it and also escaped quotes inside the string.
     - `scanUntil()` which will scan text until it reaches some option.
-    - Other utility methods such as `scanInteger()`, `scanDecimal()`, and
-      `scanHex()`.
+    - Other utility methods such as `scanInteger()`, `scanDecimal()`
 - <ins>**Built-In Case Insensitivity**</ins>
   - Y-Scanner allows ensuring that any scans it tries are done in a
     case-insensitive manner by simply setting the `insensitive` option
@@ -140,10 +138,10 @@ const scanner = new YScanner("Hello, World!")
 
 [](#methods)
 
-### `checkString(option)`
+### `checkString(pattern)`
 [](#checkstring)
 
-Checks to see if the string `option` is next in the scanned text.
+Checks to see if the string `pattern` is next in the scanned text.
 
 Returns the matched string, or `null` if not found.
 
@@ -156,10 +154,10 @@ console.log(greeting)           // "Hello"
 console.log(scanner.lastMatch)  // null
 ```
 
-### `scanString(option)`
+### `scanString(pattern)`
 [](#scanstring)
 
-Checks to see if the string `option` is next in the scanned text.
+Checks to see if the string `pattern` is next in the scanned text.
 
 Returns the matched string, or `null` if not found.
 
@@ -172,10 +170,10 @@ console.log(greeting)           // "Hello"
 console.log(scanner.lastMatch)  // "Hello"
 ```
 
-### `checkRegex(option)`
+### `checkRegex(pattern)`
 [](#checkregex)
 
-Checks to see if the regex `option` is next in the scanned text.
+Checks to see if the regex `pattern` is next in the scanned text.
 
 Returns the matched string, or `null` if not found.
 
@@ -188,10 +186,10 @@ console.log(greeting)           // "Hello"
 console.log(scanner.lastMatch)  // null
 ```
 
-### `scanRegex(option)`
+### `scanRegex(pattern)`
 [](#scanregex)
 
-Checks to see if the regex `option` is next in the scanned text.
+Checks to see if the regex `pattern` is next in the scanned text.
 
 Returns the matched string, or `null` if not found.
 
@@ -204,10 +202,10 @@ console.log(greeting)           // "Hello"
 console.log(scanner.lastMatch)  // "Hello"
 ```
 
-### `check(...options)`
+### `check(...patterns)`
 [](#check)
 
-Checks to see if any of the options given are next in the scanned text.
+Checks to see if any of the patterns are next in the scanned text.
 Each option can be a string or regex.
 
 Returns the matched string, or `null` if not found.
@@ -221,10 +219,10 @@ console.log(greeting)           // "Hello"
 console.log(scanner.lastMatch)  // null
 ```
 
-### `scan(...options)`
+### `scan(...patterns)`
 [](#scan)
 
-Checks to see if any of the options given are next in the scanned text.
+Checks to see if any of the patterns are next in the scanned text.
 Each option can be a string or regex.
 
 Returns the matched string, or `null` if not found.
@@ -244,17 +242,28 @@ Scans any text coming up in the scanned text that is between two delimiters.
 
 The `options` argument is an object with the following attributes:
 
-|      name      |                      description                | default |
-|:---------------|:------------------------------------------------|:-------:|
-| start          | The starting delimiter for the text             | `"`     |
-| end            | The ending delimiter for the text               | `"`     |
-| escape         | The escape character for the text               | `\`     |
-| keepDelimiters | Whether to keep the delimiters around the match |
-| inner          | A list of info for any inner delimited text     | `[]`    |
+|      name      |                      description                | default     |
+|:---------------|:------------------------------------------------|:-----------:|
+| start          | The starting delimiter for the text             | `"`         |
+| end            | The ending delimiter for the text               | `"`         |
+| escape         | The escape character for the text               | `\`         |
+| keepDelimiters | Whether to keep the delimiters around the match | `false`     |
+| inner          | A list of info for any inner delimited text     | `[]`        |
+| autoNest       | An object to automatically generate inners      | `undefined` |
+| noEndFail      | Whether not finding `end` is a scan fail or not | `true`      |
 
 As you may notice, every option has a default, meaning you can just use
 `scanDelimited()` without any arguments to scan a normal double-quoted string,
 if that's what you want.
+```js
+const scanner = new YScanner('"This is some quoted text"')
+
+const stringText = scanner.scanDelimited()
+
+console.log(stringText)  // "This is some quoted text"
+```
+
+Of course, you can change a couple things to easily parse something else:
 
 ```js
 const scanner = new YScanner("`Look it's a backtick string`")
@@ -263,6 +272,8 @@ const backtickString = scanner.scanDelimited({ start: '`', end: '`' })
 
 console.log(backtickString)  // "Look it's a backtick string"
 ```
+
+<br>
 
 If you have any delimited text *inside* your delimited text, you can use the
 `inner` option to specify this. Any inner delimited text is specified with an
@@ -275,6 +286,8 @@ object with the following attributes:
 | escape         | The escape character for the text               | whatever `options` has |
 | keepDelimiters | Whether to keep the delimiters around the match | whatever `options` has |
 | inner          | A list of info for any inner delimited text     | whatever `options` has |
+| autoNest       | An object to automatically generate inners      | `undefined`            |
+| noEndFail      | Whether not finding `end` is a scan fail or not | `true`                 |
 
 It's effectively the same as what you set for `options`, but `start` and `end`
 are *required*.
@@ -288,11 +301,10 @@ const scanner = new YScanner(
 )
 
 const result = scanner.scanDelimited({
-  start: '[',
-  end: ']',
+  start: '[', end: ']',
   inner: [{
-    start: '"',
-    end: '"'
+    start: '"', end: '"',
+    keepDelimiters: true
   }]
 })
 
@@ -302,6 +314,387 @@ console.log(result)
 
 Inner delimited items can have inner delimited items inside them, so you can
 scan some crazy things with this method, if you needed to.
+<br><br>
+
+#### Note: Automatic Nested Delimited Text
+
+Lastly, sometimes you may need *automatically* generated inner delimited text.
+<br>
+Especially if you have something that needs to have arbitrarily nested
+instances of itself within itself, like braces in code like this example:
+```js
+if (x) {
+  if (y) {
+    console.log('cool')
+  }
+}
+```
+You could not use `inner` alone to accomplish an indefinite amount of nested
+braced blocks of code here, as `inner` is something that is explicitly defined 
+(and so literally *not indefinite*). But not doing anything would mean that the
+scan would end at the first `}`, which isn't very useful.
+
+You can use the `autoNest` option to achieve this indefinite nesting. <br> 
+It will automatically generate copies of the main delimited text info and
+put them in `inner` (and do this for each layer of nested text), so that you can
+have automatic nested delimited text. <br>
+You just need to give `autoNest` an object to say that you want it to
+automatically nest.
+
+For example, to scan the code for a nested if-block given above:
+
+```js
+const scanner = new YScanner(`
+if (x) {
+  if (y) {
+    console.log('cool')
+  }
+}
+`.trim())
+
+const opening = scanner.scan('if (x) ')
+
+const ifBlock = scanner.scanDelimited({
+  start: '{', end: '}',
+  autoNest: {},
+  keepDelimiters: true
+})
+
+console.log(opening + ifBlock)
+/*
+"if (x) {
+  if (y) {
+    console.log('cool')
+  }
+}"
+*/
+```
+
+&nbsp;
+
+That's cool, but you might ask: <br>
+*"How do I automatically nest my delimited text but have the automatically
+generated nested text be different than the base nested text?"*
+
+<br>
+
+To make it so that anything generated via `autoNest` is different than what
+it's nested from, you can just simply give the object for `autoNest` any
+of the properties that you can give the `scanDelimited` method itself.
+
+For example, let's say you want to scan a block of code and want the braces
+on the outside removed, but want any inner braces kept:
+```js
+const Scanner = new YScanner(`
+{
+  if (stuff) {
+
+  }
+}
+`.trim())
+
+const codeBlock = scanner.scanDelimited({
+  start: '{' end: '}',
+  autoNest: { keepDelimiters: true },
+  keepDelimiters: false
+})
+
+console.log(codeBlock)
+/*
+"
+  if (stuff) {
+
+  }
+"
+*/
+```
+
+Anything defined in `autoNest` will be set for any generated nested text,
+instead of defaulting to whatever the parent delimited text has.
+
+<br>
+
+The most fun part of this is that instances of delimited text in `inner` can
+also have an `autoNest` in them, and even an `autoNest` (inner or not) can have
+`autoNest` inside it.
+
+So you can just go absolutely nuts and have crazy automatically generated
+infinitely nested delimited text that has different nested text that has
+automatically generated infinitely nested delimited text inside of it.
+
+<br>
+
+I don't believe the potential is infinite, but it's much closer to infinity
+than a single method maybe should have.
+
+### `scanUntil(patterns, options)`
+
+Scans text until any of the patterns given are encountered in the scanner
+text. <br>
+Will update the scanner if a good match.
+
+<br>
+
+
+The `patterns` argument is an array of patterns to try to scan until, and
+each pattern can be a string or regular expression.
+
+The `options` argument takes an object with the following optional properties:
+|      name      |                      description                       | default |
+|:---------------|:-------------------------------------------------------|:-------:|
+| failIfNone     | Whether not finding any pattern is a scan failure      | `false` |
+| includePattern | Whether to include the matched pattern with the result | `false` |
+
+<br>
+
+As an example, let's say you have a small language and you have some text
+that can be anything up to the start of some square brackets. <br>
+You can easily scan it by doing:
+```js
+const scanner = new YScanner('Hello, World! [other stuff]')
+const result = scanner.scanUntil(['['])
+
+console.log(result)  // "Hello, World! "
+```
+
+If you wanted to include additional kinds of brackets to stop at, you could do:
+```js
+const scanner = new YScanner('Hello, World! <other stuff again>')
+const result = scanner.scanUntil(['[', '(', '{', '<'], { includePattern: true })
+
+console.log(result)  // "Hello, World! <"
+```
+
+Compared to the methods next to this one in the list, this is pretty
+simple and straightforward.
+
+### `checkInteger(options)`
+[](#check-integer)
+
+Scans to see if there is any text next in the scanner that fits the format of
+an integer value. <br>
+However, this method provides the ability for you to extensively define just
+what "integer value" means for your use case.
+
+As long as it generally fits the
+form of "text joined together without spaces, with maybe some decoration on
+it", this will scan it.
+
+<br>
+
+The `options` argument for this method takes an object with any of the
+following properties:
+
+|      name      |                      description                |       default          |
+|:---------------|:------------------------------------------------|:----------------------:|
+| sign             | Pattern for a sign at the start                    | optional `+`/`-`  |
+| prefix           | Pattern for any number prefix                      | `null`            |
+| leading          | Pattern for any leading parts of the number        | optional `0`s     |
+| digits           | Pattern for the digits for the number              | `0` - `9`         |
+| separator        | Pattern for any separators between digits          | `,`               |
+| postfix          | Pattern for any part at the end of the number      | `null`            |
+| removeSeparators | Whether to remove separators from the number       | `true`            |
+| split            | Whether to return an object instead of the number  | `false`           |
+
+*NOTE: Patterns can be a string, regular expression, or `null`. <br>*
+*Everything except digits are optional. If you want something to be required,
+set `split` to true and see if the portion is `null` or not.*
+
+<br>
+
+If `split` is set to `true`, then instead of the matched string of text for the
+integer, this method will return an object with the following properties:
+
+|      name      |                      description                |
+|:---------------|:------------------------------------------------|
+| sign             | The matched sign, or `null` if none           | 
+| prefix           | Any part before the number, or `null` if none |
+| leading          | Any leading part of the number, or `null`     | 
+| number           | The main part of the number                   |
+| postfix          | Any part after the number, or `null` if none  |
+
+*NOTE: A bad match will still return just `null`, not this object.*
+
+&nbsp;
+
+To show off how this method is used, let's see how it works with no options
+set (which will scan a normal decimal integer value):
+```js
+const scanner = new YScanner('1,000,000')
+
+const num = scanner.checkInteger()
+
+console.log(num)  // "1000000"
+```
+
+If we set `removeSeparators` to false, it will keep them in the result:
+```js
+const scanner = new YScanner('1,000,000')
+
+const num = scanner.checkInteger({ removeSeparators: false })
+
+console.log(num)  // "1,000,000"
+```
+
+Let's try a more fun example, like changing the number format to hexadecimal:
+```js
+const scanner = new YScanner('0xDEAD_BEEF')
+
+const num = scanner.checkInteger({
+  prefix: /0x/i,
+  digits: /[0-9a-f]/i,  // Note that "1234567890ABCDEF" would work too.
+  separator: '_'        // We can have some fun and allow underscore separators.
+})
+
+console.log(num)  // "0xDEADBEEF"
+```
+
+
+<br>
+
+Lastly, let's try a more complex example. <br>
+Imagine you want to parse a signed hex value for a programming language
+you're making, and you also wanna allow it to have an `i` at the end to make it
+an imaginary integer:
+```js
+const scanner = new YScanner('-0xDEAD_BEEFi')
+
+const num = scanner.checkInteger({
+  prefix: /0x/i,
+  digits: /[0-9a-f]/i,  // Note that "1234567890ABCDEF" would work too.
+  separator: '_',       // We can have some fun and allow underscore separators.
+  postfix: 'i',
+  split: true
+})
+
+console.log(num)
+// { sign: '-', prefix: '0x', leading: null, number: 'DEADBEEF', postfix: 'i' }
+```
+
+
+### `scanInteger(options)`
+
+Same as [#checkInteger](#check-integer), but it will also update the scanner
+position on a good match.
+
+### `checkDecimal(options)`
+[](#check-decimal)
+
+Scans to see if there is any text next in the scanner that fits the format of
+a decimal value. <br>
+Like [#checkInteger](#check-integer), there is a multitude of options that will
+allow you to define what you want a decimal to be.
+
+The options argument for this method takes an object with any of the following
+properties:
+|      name        |                      description                   |      default      |
+|:-----------------|:---------------------------------------------------|:-----------------:|
+| sign             | Pattern for a sign at the start                    | optional `+`/`-`  |
+| prefix           | Pattern for any number prefix                      | `null`            |
+| leading          | Pattern for any leading parts of the number        | optional `0`s     |
+| digits           | Pattern for the digits for the number              | `0` - `9`         |
+| separator        | Pattern for any separators between digits          | `,`               |
+| radix            | Pattern for the radix point in the decimal value   | `.`               |
+| trailing         | Pattern for any trailing parts of the number       | optional `0`s     |
+| postfix          | Pattern for any part at the end of the number      | `null`            |
+| removeSeparators | Whether to remove separators from the number       | `true`            |
+| split            | Whether to return an object instead of the number  | `false`           |
+
+*NOTE: Patterns can be a string, regular expression, or `null`. <br>*
+*Everything except digits are optional. If you want something to be required,
+set `split` to true and see if the portion is `null` or not.*
+
+<br>
+
+If `split` is set to `true`, then instead of the matched string of text for the
+decimal, this method will return an object with the following properties:
+
+|      name        |                     description                   |
+|:-----------------|:--------------------------------------------------|
+| sign             | The matched sign, or `null` if none               | 
+| prefix           | Any part before the number, or `null` if none     |
+| leading          | Any leading part of the number, or `null`         | 
+| whole            | The whole number portion of the decimal or `null` |
+| radix            | The radix point for the decimal, or `null`        |
+| fractional       | The fractional portion of the decimal, or `null`  |
+| number           | The entire numeric portion of the number          |
+| trailing         | Any trailing part of the number, or `null`        |
+| postfix          | Any part after the number, or `null` if none      |
+
+*NOTE: A bad match will still return just `null`, not this object.* <br>
+*NOTE <sup>2</sup>: If the fractional part of a decimal value has text at the
+end that matches trailing text, the trailing part will take it, but will leave
+one digit in the fractional part (so `.0` will not be `.` with trailing `0`).*
+
+&nbsp;
+
+Like with `checkInteger`, we'll go over some examples; the most basic is just
+calling `checkDecimal()` with no options, which will scan a standard signed
+decimal number:
+```js
+const scanner = new YScanner('5.23')
+const num = scanner.checkDecimal()
+
+console.log(num)  // "5.23"
+```
+
+Additionally, `split` will return an object of all possible parts of the number
+split up:
+```js
+const scanner = new YScanner('-5.23')
+const num = scanner.checkDecimal({ split: true })
+
+console.log(num)
+/* { sign: '-', prefix: null, leading: null, whole: '5', radix: '.',
+     fractional: '23', number: '5.23', trailing: null, postfix: null } */
+```
+
+To up the complexity, let's say you want to scan what you call a
+"signed, decimal hex value" with optional underscore separators (that are
+simply ignored by your parser) and the ability to put an `i` at the end of
+signify an imaginary number:
+```js
+const scanner = new YScanner('-0xDEAD_BEEF.DEAF_CAFEi')
+const num = scanner.checkDecimal({
+  prefix: /0x/i,
+  digits: /[0-9a-f]/i,
+  separator: '_',
+  postfix: 'i',
+  split: true
+})
+
+console.log(num)
+/* { sign: '-', prefix: '0x', leading: null, whole: 'DEADBEEF', radix: '.',
+     fractional: 'DEAFCAFE', number: 'DEADBEEF.DEAFCAFE', trailing: null,
+     postfix: 'i' } */
+```
+
+#### Note on how numbers get split
+Just for a small reference on how your numbers should come out for questionable
+scenarios, here's a table of how some values get split up: <br>
+*Note: This is assuming leading/trailing zeroes are allowed.*
+|      value        |  leading  | whole  | fractional | trailing | note     |
+|:------------------|:---------:|:------:|:----------:|:--------:|:--------:|
+| 0.0               | `null`    | `0`    | `0`        | `null`   |          |
+| .1                | `null`    | `null` | `1`        | `null`   |          |
+| 3.                | `null`    | `null` | `null`     | `null`   | no match |
+| 00.0              | `0`       | `0`    | `0`        | `null`   |          |
+| 020.000           | `0`       | `20`   | `0`        | `00`     |          |
+
+
+### `scanDecimal(options)`
+
+Same as [#checkDecimal](#check-decimal), but it will also update the scanner
+position on a good match.
+
+### `checkHex(options)`
+[](#check-hex)
+
+### `scanHex(options)`
+
+Same as [#checkHex](#check-hex), but it will also update the scanner
+position on a good match.
+
 
 ### `loadPointer(pointer)`
 
