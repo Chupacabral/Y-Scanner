@@ -13,7 +13,8 @@
     "test": "test"
   },
   "scripts": {
-    "qtest": "cls && cross-env TS_NODE_COMPILER_OPTIONS={\\\"module\\\":\\\"commonjs\\\"} mocha -r ts-node/register 'test/**/*.ts'",
+    "qtest:full": "cross-env TS_NODE_COMPILER_OPTIONS={\\\"module\\\":\\\"commonjs\\\"} mocha -r ts-node/register 'test/**/*.ts'",
+    "qtest": "cls & npm run qtest:full",
     "test": "npm run lint && npm run qtest",
     "build": "tsc",
     "pretty:test": "prettier --write \"test/**/*.ts\"",
@@ -65,6 +66,7 @@
     "eslint": "^8.23.0",
     "mocha": "^10.0.0",
     "prettier": "^2.7.1",
+    "ts-node": "^10.9.1",
     "typescript": "^4.8.2",
     "uglify-js": "^3.17.0"
   }

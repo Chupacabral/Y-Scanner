@@ -1,0 +1,13 @@
+{
+  "compilerOptions": {
+    "target": "ES6",
+    "module": "CommonJS",
+    "lib": ["ES2021", "DOM"],
+    "declaration": true,
+    "outDir": "./out",
+    "pretty": true,
+    "strict": true
+  },
+  "include": ["./*.ts"],
+  "exclude": ["node_modules"]
+}
