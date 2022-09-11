@@ -687,15 +687,6 @@ scenarios, here's a table of how some values get split up: <br>
 Same as [#checkDecimal](#check-decimal), but it will also update the scanner
 position on a good match.
 
-### `checkHex(options)`
-[](#check-hex)
-
-### `scanHex(options)`
-
-Same as [#checkHex](#check-hex), but it will also update the scanner
-position on a good match.
-
-
 ### `loadPointer(pointer)`
 
 Loads up a pointer for some state for the scanner. This can either be
