@@ -1,13 +1,14 @@
-# Y-Scanner
+![Y-Scanner](logo_banner.png)
+-------------------------------------------------------------------------------
 [](#title)
 
 ![NPM Version](https://img.shields.io/github/package-json/v/chupacabral/y-scanner?color=BC0000&logo=npm&style=for-the-badge)
 &nbsp;
 ![License](https://img.shields.io/npm/l/y-scanner?color=%23007EC6&style=for-the-badge&logo=internetarchive)
 
-![Testing](https://img.shields.io/badge/TESTS-0%20%2F%200-18ab64?style=for-the-badge&logo=testcafe&logoColor=white)
+![Testing](https://img.shields.io/badge/TESTS-106%20%2F%20106-18ab64?style=for-the-badge&logo=testcafe&logoColor=white)
 &nbsp;
-![Code Coverage](https://img.shields.io/badge/COVERAGE-0%25-blueviolet?style=for-the-badge&logo=codeforces&logoColor=white)
+![Code Coverage](https://img.shields.io/badge/COVERAGE-65%25-blueviolet?style=for-the-badge&logo=codeforces&logoColor=white)
 &nbsp;
 
 Simple, but powerful lexical scanner. Inspired by, but distinct from, Ruby's
@@ -32,7 +33,7 @@ However, some interesting features that Y-Scanner provides are:
 - <ins>**Pointers**</ins>
   - Save your scanner state, and jump back to it if needed.
   - Y-Scanner keeps track of the last state the scanner was in, and has
-    a method `undoLastMovement()` to revert back to the previous state, so
+    a method `unscan()` to revert back to the previous state, so
     you do not have to create a pointer for simple cases.
 - <ins>**Scanning for an arbitrary amount of options**</ins>
   - The methods `check()` and `scan()` allow for infinite options of
@@ -234,6 +235,25 @@ const greeting = scanner.scan('Hello', /Salutations/)
 
 console.log(greeting)           // "Hello"
 console.log(scanner.lastMatch)  // "Hello"
+```
+
+### `skip(...patterns)`
+[](#skip)
+
+Checks to see if any of the patterns are next in the scanned text.
+Each option can be a string or regex.
+
+Returns the length of the matched string, or `null` if not found.
+
+Updates the scanner position on match, but does not update what the
+last matched text was. <br>
+Useful if you need to do something like skip whitespace.
+
+```js
+const greeting = scanner.skip('Hello', /Salutations/)
+
+console.log(greeting)           // "Hello"
+console.log(scanner.lastMatch)  // null
 ```
 
 ### `scanDelimited(options)`
@@ -740,6 +760,60 @@ scanner.setPosition(-100)
 console.log(scanner.pos)  // 0
 ```
 
+### `append(text)`
+
+Adds the given text to the end of the scanner text. <br>
+Does not change anything except for the text, effectively just making it
+longer.
+
+The `text` argument is simply a string of text.
+
+```js
+const scanner = new YScanner('Hello')
+console.log(scanner.text)             // "Hello"
+
+scanner.append(', World!')
+console.log(scanner.text)             // "Hello, World!"
+```
+
+### `prepend(text, options)`
+
+Adds the given text to the beginning of the scanner text. <br>
+Will either adjust the scan pointer to adjust for the new text at the start,
+or reset the scanner as if it started with the new text.
+
+The `text` argument is simply a string of text.
+
+The `options` argument is an object with the following properties:
+| name  |              description                | default |
+|:------|:----------------------------------------|:-------:|
+| reset | Whether to reset the scanner or not     | `false` |
+
+If `reset` is set to `false`, then the scanner will shift the current
+position forward the length of the prepended text.
+```js
+const scanner = new YScanner(', World!')
+console.log(scanner.text)             // ", World!"
+console.log(scanner.pos)              // 0
+
+scanner.prepend('Hello')
+
+console.log(scanner.text)             // "Hello, World!"
+console.log(scanner.pos)              // 5
+```
+
+If `reset` is `true`, then the scanner will simply reset itself.
+```js
+const scanner = new YScanner(', World!')
+console.log(scanner.text)             // ", World!"
+console.log(scanner.pos)              // 0
+
+scanner.prepend('Hello', { reset: true })
+
+console.log(scanner.text)             // "Hello, World!"
+console.log(scanner.pos)              // 0
+```
+
 ### `reset()`
 
 Resets the scanner back to it's initial state, as if it was brand new.
@@ -749,6 +823,36 @@ scanner.scan('Hello')
 
 scanner.reset()
 
+console.log(scanner.lastMatch)  // null
+```
+
+### `terminate(options)`
+
+Moves the scanner to the end of the scanner text.
+
+The `options` argument is an object with the optional properties:
+| name  |              description                | default |
+|:------|:----------------------------------------|:-------:|
+| clear | Whether to clear the match data as well | `false` |
+
+```js
+const scanner = new YScanner('Hello')
+scanner.terminate()
+
+console.log(scanner.pos)  // 5
+```
+
+If you set the `clear` option to `true`, then the last matched text will be
+cleared and set to `null` as well.
+```js
+const scanner = new YScanner('Hello, World!')
+
+scanner.scan('Hello')
+console.log(scanner.lastMatch)  // "Hello"
+
+scanner.terminate({ clear: true })
+
+console.log(scanner.pos)        // 5
 console.log(scanner.lastMatch)  // null
 ```
 
@@ -766,7 +870,7 @@ scanner.updateMatch('Hello')
 console.log(scanner.lastMatch)  // "Hello"
 ```
 
-### `undoLastMovement()`
+### `unscan()`
 
 Reverts the scanner state to that of `lastState`, which is the previous scanner
 position.
@@ -774,7 +878,7 @@ position.
 ```js
 scanner.scan('Hello')
 
-scanner.undoLastMovement()
+scanner.unscan()
 
 console.log(scanner.pos)  // 0
 ```
@@ -792,3 +896,49 @@ const newScanner = scanner.duplicate()
 
 console.log(newScanner.lastMatch)  // "Hello"
 ```
+
+## Static Methods
+
+### `backscan(text, pattern)`
+
+Scans the given input text from the end to see if the given option
+matches. <br>
+(e.g. "I like eggs" would backwards match "eggs")
+
+The `text` argument is the string of text to attempt to scan.
+
+The `pattern` argument is a string or regular expression to try to match
+at the end of the `text` string.
+
+<br>
+
+This method will return an object with the following properties:
+| name    |                        description                            |
+|:--------|:--------------------------------------------------------------|
+| result  | The text matched at the end of the input (`null` if no match) |
+| newText | The input text with the match removed from the end            |
+
+<br>
+
+As an example, let's say you are making a small language for programming
+the layout of something, and you want to see if some text you have ends
+with a certain kind of bracket:
+```js
+const layout = 'Here is some text [This is a button]'
+const brackets = /]|\)|}/
+
+const endBracket = YScanner.backscan(layout, brackets)
+
+console.log(endBracket)
+/* { result: ']', newText: 'Here is some text [This is a button' } */
+```
+
+<br>
+
+You may wonder: *"Doesn't JavaScript have a method to check if a
+string ends with something?"* <br>
+
+The thing that sets this method apart is that `endsWith` explicitly
+cannot use a regular expression, while `backscan` can. <br>
+This allows for much more convenience and possible ways to use it, and you
+can give `backscan` a string or regex interchangably without any hassle.

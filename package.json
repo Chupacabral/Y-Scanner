@@ -1,6 +1,6 @@
 {
   "name": "y-scanner",
-  "version": "0.7.4",
+  "version": "0.7.5",
   "description": "Simple, but powerful lexical scanner that is a more minimal implementation of X-Scanner",
   "main": "out/index.js",
   "types": "out/index.d.ts",
@@ -15,7 +15,7 @@
   "scripts": {
     "qtest:full": "cross-env TS_NODE_COMPILER_OPTIONS={\\\"module\\\":\\\"commonjs\\\"} mocha -r ts-node/register 'test/**/*.ts'",
     "qtest": "cls & npm run qtest:full",
-    "test": "npm run lint && npm run qtest",
+    "test": "npm run lint:test && npm run qtest",
     "build": "tsc",
     "pretty:test": "prettier --write \"test/**/*.ts\"",
     "pretty:src": "prettier --write \"src/**/*.ts\"",

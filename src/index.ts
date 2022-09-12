@@ -233,6 +233,10 @@ export class YScanner {
    * @param n The amount to adjust the scanner position.
    */
   public movePosition(n: number) {
+    if (n === 0) {
+      return;
+    }
+
     this.updateLastState();
 
     (<mut>this).lastPos = this.pos;
@@ -331,10 +335,10 @@ export class YScanner {
   }
 
   /**
-   * Resets the scanner state to the previous state, before the latest
+   * Resets the scanner state to the previous pointer state, before the latest
    * match.
    */
-  public undoLastMovement() {
+  public unscan() {
     const previousLastState = this.pointer;
 
     (<mut>this).pos = this.lastState.pos;
@@ -492,8 +496,46 @@ export class YScanner {
     return match;
   }
 
+  /**
+   * Scans the text and finds the first matching pattern and moves the
+   * scan pointer and returns the length of the match, but does not change
+   * what the last match was or anything aside from skipping over the matched
+   * text.
+   *
+   *
+   * @param patterns A list of patterns (string or RegExp) to try to scan.
+   * @returns The length of text skipped from any match; `0` if no match.
+   */
+  public skip(...patterns: (string | RegExp)[]): number {
+    const match: string | null = this.check(...patterns);
+
+    if (match) {
+      this.movePosition(match.length);
+    }
+
+    return (match ?? '').length;
+  }
+
   public get eos() {
     return this.pos >= this.text.length;
+  }
+
+  /**
+   * Set the scan pointer to the end of the scanner text.
+   *
+   * @param options An object with the following optional properties:
+   *
+   *                `clear`: Whether to clear the data for the last match or
+   *                         not.
+   *
+   *                      Default: false
+   */
+  public terminate({ clear = false }: { clear?: boolean } = { clear: false }) {
+    this.setPosition(this.text.length);
+
+    if (clear) {
+      (<mut>this).lastMatch = null;
+    }
   }
 
   /**
@@ -609,7 +651,7 @@ export class YScanner {
           // as when we scan the inner delimited text it will expect that
           // start delimiter to still be available.
           innerStart = dup.lastMatch;
-          dup.undoLastMovement();
+          dup.unscan();
 
           innerType = inner.find(
             (i) => i.start === innerStart,
@@ -708,7 +750,7 @@ export class YScanner {
     // If the "until pattern" should not be counted, back up duplicate scanner
     // to before it was matched.
     if (!includePattern) {
-      dup.undoLastMovement();
+      dup.unscan();
     }
 
     // Update this scanner to matched text and return it.
@@ -869,7 +911,7 @@ export class YScanner {
     if (!atLeastOneDigit && leadingPart) {
       if (typeof digits === 'string') {
         const leadingDigit = [...digits]
-          .map((digit) => this.backEndScan(leadingPart as string, digit))
+          .map((digit) => YScanner.backscan(leadingPart as string, digit))
           .find((match) => match.result !== null);
 
         if (leadingDigit !== undefined) {
@@ -879,7 +921,7 @@ export class YScanner {
         }
       }
       else {
-        const leadingDigit = this.backEndScan(leadingPart, digits);
+        const leadingDigit = YScanner.backscan(leadingPart, digits);
 
         if (leadingDigit.result !== null) {
           matchNumber = leadingDigit.result + matchNumber;
@@ -1080,7 +1122,7 @@ export class YScanner {
     if (!atLeastOneDigit && leadingPart) {
       if (typeof digits === 'string') {
         const leadingDigit = [...digits]
-          .map((digit) => this.backEndScan(leadingPart as string, digit))
+          .map((digit) => YScanner.backscan(leadingPart as string, digit))
           .find((match) => match.result !== null);
 
         if (leadingDigit !== undefined) {
@@ -1091,7 +1133,7 @@ export class YScanner {
         }
       }
       else {
-        const leadingDigit = this.backEndScan(leadingPart, digits);
+        const leadingDigit = YScanner.backscan(leadingPart, digits);
 
         if (leadingDigit.result !== null) {
           matchNumber = leadingDigit.result + matchNumber;
@@ -1335,7 +1377,7 @@ export class YScanner {
       if (typeof digits === 'string') {
         const digitArray = [...digits];
         let backMatch = digitArray
-          .map((digit) => this.backEndScan(leadingPart as string, digit))
+          .map((digit) => YScanner.backscan(leadingPart as string, digit))
           .find((digitMatch) => digitMatch.result !== null);
 
         while (backMatch?.result !== null) {
@@ -1344,19 +1386,19 @@ export class YScanner {
           matchWhole = backMatch?.result + matchWhole;
 
           backMatch = digitArray
-            .map((digit) => this.backEndScan(leadingPart as string, digit))
+            .map((digit) => YScanner.backscan(leadingPart as string, digit))
             .find((digitMatch) => digitMatch.result !== null);
         }
       }
       else {
-        let backMatch = this.backEndScan(leadingPart as string, digits);
+        let backMatch = YScanner.backscan(leadingPart as string, digits);
 
         while (backMatch?.result !== null) {
           leadingPart = backMatch?.newText as string;
 
           matchWhole = backMatch?.result + matchWhole;
 
-          backMatch = this.backEndScan(leadingPart as string, digits);
+          backMatch = YScanner.backscan(leadingPart as string, digits);
         }
       }
     }
@@ -1369,14 +1411,14 @@ export class YScanner {
       // Loop and repeatedly grab matches for the trailing text pattern off
       // the end of the fractional portion of the number, since any trailing
       // text at the end of the number counts as trailing text itself.
-      let backMatch = this.backEndScan(matchFractional, trailing);
+      let backMatch = YScanner.backscan(matchFractional, trailing);
 
       while (backMatch.result !== null) {
         matchFractional = backMatch.newText;
 
         trailingPart = backMatch.result + trailingPart;
 
-        backMatch = this.backEndScan(matchFractional, trailing);
+        backMatch = YScanner.backscan(matchFractional, trailing);
       }
 
       // After checking fractional part, scan rest of text for any trailing
@@ -1633,7 +1675,7 @@ export class YScanner {
       if (typeof digits === 'string') {
         const digitArray = [...digits];
         let backMatch = digitArray
-          .map((digit) => this.backEndScan(leadingPart as string, digit))
+          .map((digit) => YScanner.backscan(leadingPart as string, digit))
           .find((digitMatch) => digitMatch.result !== null);
 
         while (
@@ -1645,12 +1687,12 @@ export class YScanner {
           matchWhole = backMatch?.result + matchWhole;
 
           backMatch = digitArray
-            .map((digit) => this.backEndScan(leadingPart as string, digit))
+            .map((digit) => YScanner.backscan(leadingPart as string, digit))
             .find((digitMatch) => digitMatch.result !== null);
         }
       }
       else {
-        let backMatch = this.backEndScan(leadingPart as string, digits);
+        let backMatch = YScanner.backscan(leadingPart as string, digits);
 
         while (
           backMatch?.result !== null &&
@@ -1660,7 +1702,7 @@ export class YScanner {
 
           matchWhole = backMatch?.result + matchWhole;
 
-          backMatch = this.backEndScan(leadingPart as string, digits);
+          backMatch = YScanner.backscan(leadingPart as string, digits);
         }
       }
     }
@@ -1673,7 +1715,7 @@ export class YScanner {
       // Loop and repeatedly grab matches for the trailing text pattern off
       // the end of the fractional portion of the number, since any trailing
       // text at the end of the number counts as trailing text itself.
-      let backMatch = this.backEndScan(matchFractional, trailing);
+      let backMatch = YScanner.backscan(matchFractional, trailing);
 
       // Check fractional length to ensure it has at least one digit.
       // This is so something like ".0" has fractional "0" and not a leading
@@ -1685,7 +1727,7 @@ export class YScanner {
 
         trailingPart = backMatch.result + trailingPart;
 
-        backMatch = this.backEndScan(matchFractional, trailing);
+        backMatch = YScanner.backscan(matchFractional, trailing);
       }
 
       // After checking fractional part, scan rest of text for any trailing
@@ -1738,18 +1780,58 @@ export class YScanner {
   }
 
   /**
+   * Appends the given text to the end of the scanner text. Does not change
+   * anything except for the text, effectively just making it longer.
+   *
+   * @param text The text to append to the end of the scanner text.
+   */
+  public append(text: string) {
+    (<mut>this).text += text;
+  }
+
+  /**
+   * Prepends the given text to the start of the scanner text.
+   * Will adjust the scanner position to adjust for this new text at the start,
+   * unless `reset` is toggled on, in which case the scanner will reset
+   * itself.
+   *
+   *
+   * @param text The text to append to the end of the scanner text.
+   * @param options An object with the properties:
+   *
+   *                `reset`: Whether to reset the scanner after inserting the
+   *                         new text or not.
+   *
+   *                      Default: false
+   */
+  public prepend(
+    text: string,
+    { reset = false }: { reset?: boolean } = { reset: false },
+  ) {
+    (<mut>this).text = text + this.text;
+
+    if (reset) {
+      this.reset();
+    }
+    else {
+      // Adjust position to account for new space at start.
+      this.movePosition(text.length);
+    }
+  }
+
+  /**
    * Scans the given input text from the end to see if the given option
    * matches (e.g. "I like eggs" would backwards match "eggs").
    *
    * @param text The text to scan from the end of.
-   * @param option The option to try scanning the text with.
-   * @returns ```
-   *   {
-   *     result: The scanned text (or null),
-   *     newText: The input text with the result removed from the end.
-   *   }```
+   * @param pattern The pattern to try scanning the text with.
+   * @returns An object with the following properties:
+   *
+   *          `result`: The scanned text (or `null`).
+   *
+   *          `newText`: The input text with the result removed from the end.
    */
-  private backEndScan(text: string, option: string | RegExp) {
+  public static backscan(text: string, pattern: string | RegExp) {
     let [result, newText] = ['', text];
     let offset = 1;
     let currentSlice = '';
@@ -1758,12 +1840,12 @@ export class YScanner {
     // Just hardcoding for this case because I'm too lazy to change the
     // algorithm to work perfectly since this works too.
     if (text.length === 1) {
-      if (typeof option === 'string') {
-        const matched = text === option;
+      if (typeof pattern === 'string') {
+        const matched = text === pattern;
         return { result: matched ? text : null, newText: matched ? '' : text };
       }
       else {
-        const matched = text.match(option);
+        const matched = text.match(pattern);
         if (matched) {
           return { result: matched[0], newText: '' };
         }
@@ -1773,11 +1855,11 @@ export class YScanner {
       }
     }
 
-    if (typeof option === 'string') {
+    if (typeof pattern === 'string') {
       while (newText && offset < newText.length) {
         currentSlice = newText.slice(newText.length - offset);
 
-        if (currentSlice === option) {
+        if (currentSlice === pattern) {
           result = currentSlice + result;
           newText = newText.slice(0, -offset);
           break;
@@ -1789,15 +1871,15 @@ export class YScanner {
     }
     // RegExp expected.
     else {
-      // Ensure regex option will only match at start of text.
-      if (!('^' in [...option.source])) {
-        option = new RegExp('^' + option.source, option.flags);
+      // Ensure regex pattern will only match at start of text.
+      if (!('^' in [...pattern.source])) {
+        pattern = new RegExp('^' + pattern.source, pattern.flags);
       }
 
       while (newText !== '' && offset < newText.length) {
         currentSlice = newText.slice(newText.length - offset);
 
-        if (currentSlice.match(option)) {
+        if (currentSlice.match(pattern)) {
           result = currentSlice + result;
           newText = newText.slice(0, -offset);
           break;

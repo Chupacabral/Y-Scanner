@@ -1,5 +1,6 @@
 export const testText = 'Hello, World!';
 export const goodString = 'Hello';
+export const goodString2 = ', World!';
 export const goodStringCI = goodString.toLowerCase();
 export const badString = 'wrong';
 export const goodRegex = /[a-zA-Z]+/;
