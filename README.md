@@ -35,8 +35,11 @@ However, some interesting features that Y-Scanner provides are:
   - Y-Scanner keeps track of the last state the scanner was in, and has
     a method `unscan()` to revert back to the previous state, so
     you do not have to create a pointer for simple cases.
+  - Pointers are just small and simple objects, so you can easily create your
+    own if you want a specific scanner state or want to "store" the scanner
+    for later use without keeping the whole thing.
 - <ins>**Scanning for an arbitrary amount of options**</ins>
-  - The methods `check()` and `scan()` allow for infinite options of
+  - The methods `check()`, `scan()`, and `skip()` allow for infinite options of
     either `string` or `RegExp`, so that you don't have to repeatedly
     scan and check if an option was matched yourself.
 - <ins>**Powerful convenience methods**</ins>
