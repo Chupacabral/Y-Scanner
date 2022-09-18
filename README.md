@@ -1,4 +1,4 @@
-![Y-Scanner](logo_banner.png)
+### ![Y-Scanner](logo_banner.png)
 -------------------------------------------------------------------------------
 [](#title)
 
@@ -6,9 +6,9 @@
 &nbsp;
 ![License](https://img.shields.io/npm/l/y-scanner?color=%23007EC6&style=for-the-badge&logo=internetarchive)
 
-![Testing](https://img.shields.io/badge/TESTS-106%20%2F%20106-18ab64?style=for-the-badge&logo=testcafe&logoColor=white)
+![Testing](https://img.shields.io/badge/TESTS-139%20%2F%20139-18ab64?style=for-the-badge&logo=testcafe&logoColor=white)
 &nbsp;
-![Code Coverage](https://img.shields.io/badge/COVERAGE-65%25-blueviolet?style=for-the-badge&logo=codeforces&logoColor=white)
+![Code Coverage](https://img.shields.io/badge/COVERAGE-75%25-blueviolet?style=for-the-badge&logo=codeforces&logoColor=white)
 &nbsp;
 
 Simple, but powerful lexical scanner. Inspired by, but distinct from, Ruby's
@@ -304,10 +304,10 @@ object with the following attributes:
 | start          | The starting delimiter for the text             | NONE                   |
 | end            | The ending delimiter for the text               | NONE                   |
 | escape         | The escape character for the text               | whatever `options` has |
-| keepDelimiters | Whether to keep the delimiters around the match | whatever `options` has |
+| keepDelimiters | Whether to keep the delimiters around the match | `true`                   |
 | inner          | A list of info for any inner delimited text     | whatever `options` has |
 | autoNest       | An object to automatically generate inners      | `undefined`            |
-| noEndFail      | Whether not finding `end` is a scan fail or not | `true`                 |
+| noEndFail      | Whether not finding `end` is a scan fail or not | whatever `options` has |
 
 It's effectively the same as what you set for `options`, but `start` and `end`
 are *required*.
@@ -323,8 +323,7 @@ const scanner = new YScanner(
 const result = scanner.scanDelimited({
   start: '[', end: ']',
   inner: [{
-    start: '"', end: '"',
-    keepDelimiters: true
+    start: '"', end: '"'
   }]
 })
 
@@ -334,6 +333,26 @@ console.log(result)
 
 Inner delimited items can have inner delimited items inside them, so you can
 scan some crazy things with this method, if you needed to.
+
+<br>
+
+#### Note: Nested Delimited Text Result Behavior
+Note that if inner delimited text does not scan an end delimiter for itself,
+but has `noEndFail` set to `false`, then it will propagate the success to
+count for the whole scan, even if higher levels of delimited text have
+`noEndFail` to `true`.
+
+This leads to more intuitive behavior, such as
+```js
+const scanner = new YScanner('"Hello, World [Inner Text"')
+
+const text = scanner.scanDelimited({
+  noEndFail: true  // True by default, but here for demonstration.
+  inner: [{ start: '[', end: ']', noEndFail: false }]
+})
+```
+Returning a successful match of `Hello, World [Inner Text` instead of `null`,
+which is what would happen without this detail.
 <br><br>
 
 #### Note: Automatic Nested Delimited Text

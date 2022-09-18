@@ -1,4 +1,4 @@
-import { expect, should, config, assert, use } from 'chai';
+import { expect, should, config } from 'chai';
 import { YScanner } from '../out/index';
 import { SECTION } from './utils';
 import {

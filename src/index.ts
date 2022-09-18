@@ -65,7 +65,7 @@ type mut = Mutable<YScanner>;
 export type DelimitedTextInfo = {
   start?: string;
   end?: string;
-  escape?: string;
+  escape?: string | null;
   keepDelimiters?: boolean;
   inner?: InnerDelimitedTextInfo[];
   autoNest?: DelimitedTextInfo;
@@ -93,7 +93,7 @@ export type DelimitedTextInfo = {
 export type InnerDelimitedTextInfo = {
   start: string;
   end: string;
-  escape?: string;
+  escape?: string | null;
   keepDelimiters?: boolean;
   inner?: InnerDelimitedTextInfo[];
   autoNest?: DelimitedTextInfo;
@@ -581,7 +581,7 @@ export class YScanner {
       keepDelimiters = false,
       inner = [],
       autoNest = undefined,
-      noEndFail = false,
+      noEndFail = true,
     }: DelimitedTextInfo = {
       start: '"',
       end: '"',
@@ -589,7 +589,7 @@ export class YScanner {
       keepDelimiters: false,
       inner: [],
       autoNest: undefined,
-      noEndFail: false,
+      noEndFail: true,
     },
   ): string | null {
     const dup = this.duplicate();
@@ -639,7 +639,7 @@ export class YScanner {
 
         // If escape character found, then toggle escape flag and increase
         // number of escapes found.
-        if (dup.scan(escape) !== null) {
+        if (escape != null && dup.scan(escape) !== null) {
           escaped = true;
           continue;
         }
@@ -662,11 +662,39 @@ export class YScanner {
           innerType.inner = innerType.inner ?? [];
           innerType.keepDelimiters = innerType.keepDelimiters ?? true;
           innerType.autoNest = innerType.autoNest ?? undefined;
-          innerType.noEndFail = innerType.noEndFail ?? true;
+          innerType.noEndFail = innerType.noEndFail ?? noEndFail;
 
           // Recursively scan inner delimited text and add it to scan
           // at current level.
-          match += dup.scanDelimited(innerType as DelimitedTextInfo);
+          let outcome = dup.scanDelimited(innerType as DelimitedTextInfo);
+
+          const innerSwallowEnd = YScanner.backscan(outcome ?? '', end);
+
+          // If the end delimiter for the inner text is not the same as the
+          // outer text, and the inner scan ends with the outer end delimiter,
+          // then it seems the inner scam has swallowed the outer delimiter.
+          //
+          // In that case, remove the delimiter from the inner outcome if
+          // the outer text does not want the delimiter kept.
+          //
+          // Note that this is only if innerEnd !== outerEnd as otherwise
+          // it is assumed that the end delimiter is part of the inner text.
+          if (
+            innerType.end !== end &&
+            innerSwallowEnd.result !== null &&
+            !keepDelimiters
+          ) {
+            outcome = innerSwallowEnd.newText;
+          }
+
+          if (outcome !== null) {
+            match += outcome;
+          }
+          // If null result, then it is an inner scan failure.
+          // noEndFail = true for inner would mean null is not returned.
+          else {
+            return null;
+          }
         }
         else {
           // If no other case was hit, then we just have a normal character
@@ -676,7 +704,7 @@ export class YScanner {
       }
     }
 
-    const fullMatch = startDelimiter + match + endDelimiter;
+    const fullMatch = startDelimiter + match + (endDelimiter ?? '');
 
     // If no end delimiter, then our delimited text never ended, which is
     // a failure as it literally was not limited.
@@ -1895,5 +1923,3 @@ export class YScanner {
 }
 
 // TODO: Clean up documentation and code.
-
-// TODO: TEST CODE

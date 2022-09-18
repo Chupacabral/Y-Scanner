@@ -1,19 +1,19 @@
-import { expect, should, config, assert, use } from 'chai';
+import { expect, should, config } from 'chai';
 import { YScanner } from '../out/index';
 import { SECTION } from './utils';
 import {
   testText,
-  goodString,
-  goodStringCI,
-  badString,
-  goodRegex,
-  goodRegexCI,
-  badRegex,
-  testEnumOutput,
-  testPointerName,
-  testTypeName,
-  testMacroName,
-  goodString2,
+  // goodString,
+  // goodStringCI,
+  // badString,
+  // goodRegex,
+  // goodRegexCI,
+  // badRegex,
+  // testEnumOutput,
+  // testPointerName,
+  // testTypeName,
+  // testMacroName,
+  // goodString2,
 } from './constants';
 
 // Initialize chai.should so that it can be used.
